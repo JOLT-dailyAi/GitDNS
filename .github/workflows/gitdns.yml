@@ -47,7 +47,12 @@ jobs:
       # repo so git can see and commit it.
       - name: Generate GitDNS zone file
         working-directory: ${{ github.workspace }}
-        run: node /tmp/gitdns/gitdns.js https://github.com/${{ github.repository }}
+        run: |
+          echo "Working dir: $(pwd)"
+          node /tmp/gitdns/gitdns.js https://github.com/${{ github.repository }}
+          echo "Files created:"
+          find . -name "*.zone" -o -name "*.txt" | grep GitDNS || echo "No GitDNS files found"
+          ls -la README/GitDNS/ 2>/dev/null || echo "README/GitDNS/ not found"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
