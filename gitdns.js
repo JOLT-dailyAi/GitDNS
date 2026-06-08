@@ -494,17 +494,25 @@ async function main() {
 
     // ── Dual output ──────────────────────────────────────────
     // 1. Human manifest  — rich, emojis, stats, both URL formats
-    // 2. gitdns.zone     — lean, $ORIGIN + flat paths, agents only
+    // 2. {repo}.zone     — lean, $ORIGIN + flat paths, agents only
+    //
+    // Output folder: README/GitDNS/{repo_name}/
+    //   All generated files are saved here, keeping the working
+    //   directory clean regardless of where the script is run from.
+
+    const outputDir = path.join(process.env.GITDNS_OUTPUT_DIR || process.cwd(), 'README', 'GitDNS', `${owner}_${repoName}`);
+    fs.mkdirSync(outputDir, { recursive: true }); // creates folders if they don't exist
 
     const manifestContent  = buildOutput(files, dirs, branchName);
     const manifestFilename = `${owner}_${repoName}.txt`;
-    fs.writeFileSync(path.join(process.cwd(), manifestFilename), manifestContent, 'utf8');
+    fs.writeFileSync(path.join(outputDir, manifestFilename), manifestContent, 'utf8');
 
     const zoneContent      = generateZoneFile(files, branchName);
     const zoneFilename     = customZoneName ? `${customZoneName}.zone` : `${owner}_${repoName}.zone`;
-    fs.writeFileSync(path.join(process.cwd(), zoneFilename), zoneContent, 'utf8');
+    fs.writeFileSync(path.join(outputDir, zoneFilename), zoneContent, 'utf8');
 
     console.log(`\n✅ Done!`);
+    console.log(`   📁 Output folder : README/GitDNS/${owner}_${repoName}/`);
     console.log(`   📄 ${manifestFilename.padEnd(30)} — human manifest  (rich, emojis, stats, both URLs)`);
     console.log(`   📡 ${zoneFilename.padEnd(30)} — gitdns zone file (lean, $ORIGIN + flat paths)`);
     console.log(`   Files : ${files.length.toLocaleString()}  |  Dirs: ${dirs.length.toLocaleString()}\n`);
