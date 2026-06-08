@@ -32,7 +32,7 @@ $ node gitdns.js https://github.com/facebook/react
 
 ✅ Done!
    📄 facebook_react.txt          — human manifest  (rich, emojis, stats, both URLs)
-   📡 gitdns.zone                 — gitdns zone file (lean, $ORIGIN + flat paths)
+   📡 facebook_react.zone         — gitdns zone file (lean, $ORIGIN + flat paths)
    Files : 3,421  |  Dirs: 412
 ```
 
@@ -150,7 +150,7 @@ jobs:
         run: |
           git config user.name  "gitdns-bot"
           git config user.email "gitdns@users.noreply.github.com"
-          git add gitdns.zone *_*.txt
+          git add *_*.zone *_*.txt
           git diff --staged --quiet || git commit -m "chore(ai): update gitdns zone file [skip ci]"
           git push
 ```
