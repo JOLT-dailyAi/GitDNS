@@ -43,9 +43,10 @@ jobs:
         run: git clone https://github.com/JOLT-dailyAi/GitDNS /tmp/gitdns
 
       # ── Step 4: Generate zone file and manifest ────────────────
-      # Runs against THIS repo using the built-in GITHUB_TOKEN.
-      # Your token never leaves your repo's CI environment.
+      # working-directory ensures output lands inside the checked-out
+      # repo so git can see and commit it.
       - name: Generate GitDNS zone file
+        working-directory: ${{ github.workspace }}
         run: node /tmp/gitdns/gitdns.js https://github.com/${{ github.repository }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
