@@ -1,0 +1,63 @@
+name: GitDNS — Update zone file
+
+# ── When this runs ────────────────────────────────────────────
+# 1. On every push to main         — catches file additions and deletions
+# 2. Manual trigger (workflow_dispatch) — run on demand from GitHub UI
+# 3. Weekly schedule               — keeps zone file fresh even if repo is quiet
+#
+# Note: The zone file only needs updating when files are ADDED or DELETED.
+# File modifications don't change raw URLs so the zone stays valid.
+# Running on every push is safe — if nothing structural changed,
+# git commit will find no diff and skip the push cleanly.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * 1'  # Every Monday at 2am UTC
+
+jobs:
+  generate-zone-file:
+    runs-on: ubuntu-latest  # GitHub's free runner — 4 vCPU, 16GB RAM
+
+    # Required permissions for the GITHUB_TOKEN to commit back to the repo
+    permissions:
+      contents: write
+
+    steps:
+      # ── Step 1: Checkout the repo that triggered this workflow ──
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── Step 2: Set up Node.js (no install needed — zero dependencies) ──
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # ── Step 3: Pull the latest GitDNS script ──────────────────
+      - name: Clone GitDNS
+        run: git clone https://github.com/JOLT-dailyAi/GitDNS /tmp/gitdns
+
+      # ── Step 4: Generate zone file and manifest ────────────────
+      # Runs against THIS repo using the built-in GITHUB_TOKEN.
+      # Your token never leaves your repo's CI environment.
+      - name: Generate GitDNS zone file
+        run: node /tmp/gitdns/gitdns.js https://github.com/${{ github.repository }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── Step 5: Commit output files back to the repo ──────────
+      # [skip ci] in the commit message prevents this commit from
+      # triggering another workflow run (infinite loop prevention).
+      - name: Commit zone file
+        run: |
+          git config user.name  "gitdns-bot"
+          git config user.email "gitdns@users.noreply.github.com"
+          git add gitdns.zone *_*.txt
+          git diff --staged --quiet \
+            && echo "ℹ️  No structural changes detected — zone file unchanged." \
+            || (git commit -m "chore(ai): update gitdns zone file [skip ci]" && git push)
