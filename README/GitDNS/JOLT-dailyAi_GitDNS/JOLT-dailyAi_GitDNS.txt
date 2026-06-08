@@ -1,0 +1,43 @@
+
+════════════════════════════════════════════════════════════════════════════════
+📊 REPOSITORY: GITDNS (👤 JOLT-dailyAi)
+════════════════════════════════════════════════════════════════════════════════
+⚡ JavaScript Project
+🔗 https://github.com/JOLT-dailyAi/GitDNS
+
+📊 STATS
+├── 📏 Size: 31.50 KB
+├── 📁 Directories: 2
+├── 📄 Files: 4
+└── 🏗️ Max Depth: 2
+
+⏰ Generated: 08 Jun 2026, 07:52 pm UTC
+════════════════════════════════════════════════════════════════════════════════
+
+🌳 REPOSITORY STRUCTURE:
+════════════════════════════════════════════════════════════════════════════════
+📂 GitDNS (ROOT FILES [3])
+├── 📄 LICENSE 📜
+├── 📄 gitdns.js ⚡
+├── 📄 README.md 📖
+├── 📂 .github/
+│   ├── 📂 workflows/
+│   │   └── 📄 gitdns.yml 📄
+
+════════════════════════════════════════════════════════════════════════════════
+💡 TECH STACK:
+YAML 📄, JavaScript ⚡, Markdown 📖
+
+📊 FILE DETAILS (Cached | Stable URLs):
+     3.01 KB - 📄 gitdns.yml 📄 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/main/.github/workflows/gitdns.yml
+     1.04 KB - 📄 LICENSE 📜 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/main/LICENSE
+    21.46 KB - 📄 gitdns.js ⚡ - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/main/gitdns.js
+     5.99 KB - 📄 README.md 📖 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/main/README.md
+════════════════════════════════════════════════════════════════════════════════
+📄 LATEST BRANCH HEAD URLS:
+📄 gitdns.yml 📄 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/refs/heads/main/.github/workflows/gitdns.yml
+📄 LICENSE 📜 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/refs/heads/main/LICENSE
+📄 gitdns.js ⚡ - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/refs/heads/main/gitdns.js
+📄 README.md 📖 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/refs/heads/main/README.md
+════════════════════════════════════════════════════════════════════════════════
+🤖 AI Note: Acknowledge the provided files. Follow the process in https://raw.githubusercontent.com/JOLT-dailyAi/GitHub-to-AI-ingester/refs/heads/main/assets/AI/prompt.md then wait for further instructions. If URL fetching unavailable, wait for user to provide file contents.
