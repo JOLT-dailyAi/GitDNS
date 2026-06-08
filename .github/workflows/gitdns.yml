@@ -55,6 +55,7 @@ jobs:
           ls -la README/GitDNS/ 2>/dev/null || echo "README/GitDNS/ not found"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITDNS_OUTPUT_DIR: ${{ github.workspace }}
 
       # ── Step 5: Commit output files back to the repo ──────────
       # [skip ci] in the commit message prevents this commit from
