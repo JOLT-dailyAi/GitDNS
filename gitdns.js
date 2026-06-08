@@ -501,7 +501,7 @@ async function main() {
     fs.writeFileSync(path.join(process.cwd(), manifestFilename), manifestContent, 'utf8');
 
     const zoneContent      = generateZoneFile(files, branchName);
-    const zoneFilename     = customZoneName ? `${customZoneName}.zone` : 'gitdns.zone';
+    const zoneFilename     = customZoneName ? `${customZoneName}.zone` : `${owner}_${repoName}.zone`;
     fs.writeFileSync(path.join(process.cwd(), zoneFilename), zoneContent, 'utf8');
 
     console.log(`\n✅ Done!`);
