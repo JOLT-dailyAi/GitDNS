@@ -57,7 +57,7 @@ jobs:
         run: |
           git config user.name  "gitdns-bot"
           git config user.email "gitdns@users.noreply.github.com"
-          git add gitdns.zone *_*.txt
+          git add *_*.zone *_*.txt
           git diff --staged --quiet \
             && echo "ℹ️  No structural changes detected — zone file unchanged." \
             || (git commit -m "chore(ai): update gitdns zone file [skip ci]" && git push)
