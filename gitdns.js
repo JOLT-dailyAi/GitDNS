@@ -504,7 +504,7 @@ async function main() {
     fs.mkdirSync(outputDir, { recursive: true }); // creates folders if they don't exist
 
     const manifestContent  = buildOutput(files, dirs, branchName);
-    const manifestFilename = `${owner}_${repoName}.txt`;
+    const manifestFilename = `${owner}_${repoName}.tree`;
     fs.writeFileSync(path.join(outputDir, manifestFilename), manifestContent, 'utf8');
 
     const zoneContent      = generateZoneFile(files, branchName);
@@ -513,7 +513,7 @@ async function main() {
 
     console.log(`\n✅ Done!`);
     console.log(`   📁 Output folder : README/GitDNS/${owner}_${repoName}/`);
-    console.log(`   📄 ${manifestFilename.padEnd(30)} — human manifest  (rich, emojis, stats, both URLs)`);
+    console.log(`   📄 ${manifestFilename.padEnd(30)} — human tree      (rich, emojis, stats, both URLs)`);
     console.log(`   📡 ${zoneFilename.padEnd(30)} — gitdns zone file (lean, $ORIGIN + flat paths)`);
     console.log(`   Files : ${files.length.toLocaleString()}  |  Dirs: ${dirs.length.toLocaleString()}\n`);
 
