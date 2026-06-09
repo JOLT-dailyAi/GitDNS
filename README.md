@@ -31,12 +31,12 @@ src/Button.tsx  →  GitDNS      →  raw.githubusercontent.com/...  →  fetch
 $ node gitdns.js https://github.com/facebook/react
 
 ✅ Done!
-   📄 facebook_react.txt          — human manifest  (rich, emojis, stats, both URLs)
+   📄 facebook_react.tree          — human manifest  (rich, emojis, stats, both URLs)
    📡 facebook_react.zone         — gitdns zone file (lean, $ORIGIN + flat paths)
    Files : 3,421  |  Dirs: 412
 ```
 
-### `owner_repo.txt` — Human Manifest
+### `owner_repo.tree` — Human Tree
 For developers orienting in a new codebase. Full directory tree with icons, file sizes, tech stack detection, and both stable + latest raw URLs per file.
 
 ### `gitdns.zone` — Machine Zone File
@@ -150,7 +150,7 @@ jobs:
         run: |
           git config user.name  "gitdns-bot"
           git config user.email "gitdns@users.noreply.github.com"
-          git add *_*.zone *_*.txt
+          git add *_*.zone *_*.tree
           git diff --staged --quiet || git commit -m "chore(ai): update gitdns zone file [skip ci]"
           git push
 ```
