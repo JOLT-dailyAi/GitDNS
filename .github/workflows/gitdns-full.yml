@@ -65,6 +65,12 @@ on:
   #   - cron: '0 2 1 * *'    # Monthly on the 1st at 2am UTC
   #   - cron: '0 2 * * 0,3'  # Every Sunday and Wednesday at 2am UTC
 
+# Concurrency control — if a newer run starts for the same ref,
+# cancel the older one to prevent simultaneous push conflicts.
+concurrency:
+  group: gitdns-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   gitdns-full:
     runs-on: ubuntu-latest  # GitHub free runner — 4 vCPU, 16GB RAM, zero cost for public repos
@@ -116,4 +122,4 @@ jobs:
           git add --all README/GitDNS/
           git diff --staged --quiet \
             && echo "ℹ️  No changes to commit — files already up to date." \
-            || (git commit -m "chore(ai): full gitdns regeneration [skip ci]" && git push)
+            || (git commit -m "chore(ai): full gitdns regeneration [skip ci]" && git pull --rebase && git push)
