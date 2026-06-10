@@ -1,7 +1,7 @@
 ; GitDNS Authoritative Zone File
 ; Repo   : JOLT-dailyAi/GitDNS | Branch: main
-; Files  : 6
-; Generated: 09 Jun 2026, 04:37 pm UTC
+; Files  : 7
+; Generated: 10 Jun 2026, 06:13 am UTC
 ; Optimized for minimal AI agent token consumption.
 ; Usage  : Full URL = $ORIGIN + relative path
 ; Example: https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/main/src/index.js
@@ -12,5 +12,6 @@ $ORIGIN https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/main/
 LICENSE
 gitdns.js
 README.md
-README/GitDNS/JOLT-dailyAi_GitDNS/JOLT-dailyAi_GitDNS.txt
+README/GitDNS/AGENT_README.md
+README/GitDNS/JOLT-dailyAi_GitDNS/JOLT-dailyAi_GitDNS.tree
 README/GitDNS/JOLT-dailyAi_GitDNS/JOLT-dailyAi_GitDNS.zone
