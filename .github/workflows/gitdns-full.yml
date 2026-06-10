@@ -1,0 +1,119 @@
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  GitDNS — Full Regeneration Workflow                                    ║
+# ║  File: .github/workflows/gitdns-full.yml                                ║
+# ╠══════════════════════════════════════════════════════════════════════════╣
+# ║  PURPOSE                                                                 ║
+# ║  Fully regenerates all three GitDNS files from scratch:                ║
+# ║    .tree — human topology diagram (stats, icons, both URLs)            ║
+# ║    .map  — agent network topology index (indented, no URLs)            ║
+# ║    .zone — agent routing table (pre-resolved, flat paths)              ║
+# ║                                                                          ║
+# ║  Use this when you want guaranteed accuracy — stats, file counts,      ║
+# ║  and tech stack are recalculated fresh from the GitHub API.            ║
+# ║  For day-to-day path updates use gitdns.yml (incremental patch).       ║
+# ╠══════════════════════════════════════════════════════════════════════════╣
+# ║  PERFORMANCE GUIDE — expected run times by repo size                   ║
+# ║                                                                          ║
+# ║  < 1,000 files   →  ~5  seconds   — safe to auto-run on every merge   ║
+# ║  1,000–5,000     →  ~30 seconds   — safe to auto-run on merge to main ║
+# ║  5,000–20,000    →  ~1-3 minutes  — recommended: schedule only        ║
+# ║  20,000+         →  3-10 minutes  — recommended: manual trigger only  ║
+# ╠══════════════════════════════════════════════════════════════════════════╣
+# ║  USER CONTROLS — comment out any trigger block to disable it           ║
+# ║                                                                          ║
+# ║  TRIGGER 1 — merge to main (default: ON)                               ║
+# ║  Regenerates all files when a PR is merged or push lands on main.      ║
+# ║  Recommended for repos under 5,000 files.                              ║
+# ║  For large repos: comment out lines 50-52 to disable auto-run.        ║
+# ║                                                                          ║
+# ║  TRIGGER 2 — manual run (default: ON)                                  ║
+# ║  Run on demand: Actions → GitDNS Full Regeneration → Run workflow      ║
+# ║  Always available regardless of repo size.                             ║
+# ║  To disable: comment out line 53                                       ║
+# ║                                                                          ║
+# ║  TRIGGER 3 — scheduled run (default: OFF)                              ║
+# ║  Keeps files fresh automatically on a recurring schedule.              ║
+# ║  Recommended for repos over 5,000 files instead of merge trigger.     ║
+# ║  To enable: uncomment lines 56-57. Edit cron to customise.            ║
+# ║  Customise: https://crontab.guru to generate your own cron expression  ║
+# ║                                                                          ║
+# ║  THRESHOLD RECOMMENDATION                                               ║
+# ║  Repo < 5,000 files  → keep Trigger 1 ON,  Trigger 3 OFF              ║
+# ║  Repo > 5,000 files  → comment Trigger 1,  enable Trigger 3           ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+
+name: GitDNS — Full Regeneration
+
+on:
+  # TRIGGER 1 — full regeneration on merge/push to main
+  # For large repos (5,000+ files): comment out the next 2 lines
+  push:
+    branches: [main]
+
+  # TRIGGER 2 — manual run from GitHub UI (always recommended to keep ON)
+  # Comment out the next line to disable manual trigger
+  workflow_dispatch:
+
+  # TRIGGER 3 — scheduled full regeneration (currently OFF)
+  # Recommended for large repos instead of Trigger 1.
+  # Uncomment the next 2 lines to enable. Edit cron to customise schedule.
+  # schedule:
+  #   - cron: '0 2 * * 1'  # Every Monday at 2am UTC — edit as needed
+  #
+  # Other schedule examples:
+  #   - cron: '0 2 * * *'    # Daily at 2am UTC
+  #   - cron: '0 2 1 * *'    # Monthly on the 1st at 2am UTC
+  #   - cron: '0 2 * * 0,3'  # Every Sunday and Wednesday at 2am UTC
+
+jobs:
+  gitdns-full:
+    runs-on: ubuntu-latest  # GitHub free runner — 4 vCPU, 16GB RAM, zero cost for public repos
+
+    permissions:
+      contents: write  # Required to commit generated files back to the repo
+
+    steps:
+      # ── Step 1: Checkout ───────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── Step 2: Node.js setup ──────────────────────────────────
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # ── Step 3: Clone GitDNS script ────────────────────────────
+      - name: Clone GitDNS
+        run: git clone https://github.com/JOLT-dailyAi/GitDNS /tmp/gitdns
+
+      # ── Step 4: Full regeneration ──────────────────────────────
+      # Calls GitHub API once to get complete recursive tree.
+      # Regenerates .tree, .map, and .zone from scratch.
+      # Run time depends on repo size — see performance guide above.
+      - name: Full regeneration
+        working-directory: ${{ github.workspace }}
+        run: |
+          echo "Working dir: $(pwd)"
+          echo "Starting full regeneration for ${{ github.repository }}..."
+          node /tmp/gitdns/gitdns.js https://github.com/${{ github.repository }}
+          echo "Files generated:"
+          find . -name "*.zone" -o -name "*.map" -o -name "*.tree" | grep GitDNS || echo "No GitDNS files found"
+          ls -la README/GitDNS/ 2>/dev/null || echo "README/GitDNS/ not found"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITDNS_OUTPUT_DIR: ${{ github.workspace }}
+
+      # ── Step 5: Commit generated files ────────────────────────
+      # [skip ci] prevents this commit triggering another workflow run.
+      - name: Commit generated files
+        run: |
+          git config user.name  "gitdns-bot"
+          git config user.email "gitdns@users.noreply.github.com"
+          mkdir -p README/GitDNS
+          git add --all README/GitDNS/
+          git diff --staged --quiet \
+            && echo "ℹ️  No changes to commit — files already up to date." \
+            || (git commit -m "chore(ai): full gitdns regeneration [skip ci]" && git push)
