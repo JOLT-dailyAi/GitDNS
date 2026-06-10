@@ -10,6 +10,7 @@ LICENSE
 README.md
 .github/
   workflows/
+    gitdns-full.yml
     gitdns.yml
 README/
   GitDNS/

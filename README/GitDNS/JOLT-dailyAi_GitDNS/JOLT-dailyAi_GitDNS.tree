@@ -8,12 +8,12 @@
 🔗 https://github.com/JOLT-dailyAi/GitDNS
 
 📊 STATS
-├── 📏 Size: 46.98 KB
+├── 📏 Size: 63.02 KB
 ├── 📁 Directories: 5
-├── 📄 Files: 7
+├── 📄 Files: 8
 └── 🏗️ Max Depth: 3
 
-⏰ Generated: 10 Jun 2026, 11:59 am UTC
+⏰ Generated: 10 Jun 2026, 00:01 pm UTC
 ════════════════════════════════════════════════════════════════════════════════
 
 🌳 REPOSITORY STRUCTURE:
@@ -24,6 +24,7 @@
 ├── 📄 README.md 📖
 ├── 📂 .github/
 │   ├── 📂 workflows/
+│   │   ├── 📄 gitdns-full.yml 📄
 │   │   └── 📄 gitdns.yml 📄
 ├── 📂 README/
 │   ├── 📂 GitDNS/
@@ -37,7 +38,8 @@
 YAML 📄, JavaScript ⚡, Markdown 📖
 
 📊 FILE DETAILS (Cached | Stable URLs):
-     3.03 KB - 📄 gitdns.yml 📄 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/main/.github/workflows/gitdns.yml
+     7.52 KB - 📄 gitdns-full.yml 📄 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/main/.github/workflows/gitdns-full.yml
+    11.55 KB - 📄 gitdns.yml 📄 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/main/.github/workflows/gitdns.yml
      1.04 KB - 📄 LICENSE 📜 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/main/LICENSE
     24.47 KB - 📄 gitdns.js ⚡ - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/main/gitdns.js
     12.11 KB - 📄 README.md 📖 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/main/README.md
@@ -46,6 +48,7 @@ YAML 📄, JavaScript ⚡, Markdown 📖
      0.93 KB - 📄 JOLT-dailyAi_GitDNS.zone 📄 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/main/README/GitDNS/JOLT-dailyAi_GitDNS/JOLT-dailyAi_GitDNS.zone
 ════════════════════════════════════════════════════════════════════════════════
 📄 LATEST BRANCH HEAD URLS:
+📄 gitdns-full.yml 📄 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/refs/heads/main/.github/workflows/gitdns-full.yml
 📄 gitdns.yml 📄 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/refs/heads/main/.github/workflows/gitdns.yml
 📄 LICENSE 📜 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/refs/heads/main/LICENSE
 📄 gitdns.js ⚡ - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/refs/heads/main/gitdns.js
