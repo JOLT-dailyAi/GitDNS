@@ -1,71 +1,217 @@
-name: GitDNS — Update zone file
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  GitDNS — Incremental Patch Workflow                                    ║
+# ║  File: .github/workflows/gitdns.yml                                     ║
+# ╠══════════════════════════════════════════════════════════════════════════╣
+# ║  PURPOSE                                                                 ║
+# ║  Runs on every push. Patches .map and .zone only when files are         ║
+# ║  added or deleted. Skips entirely if only file contents changed.        ║
+# ║  Fast — completes in ~3-5 seconds regardless of repo size.             ║
+# ║  Does NOT update .tree — use gitdns-full.yml for full regeneration.    ║
+# ╠══════════════════════════════════════════════════════════════════════════╣
+# ║  USER CONTROLS — comment out any trigger block to disable it           ║
+# ║                                                                          ║
+# ║  TRIGGER 1 — push to main (default: ON)                                ║
+# ║  Patches .map and .zone whenever files are added or deleted.           ║
+# ║  To disable: comment out the push: block below (lines 30-31)          ║
+# ║                                                                          ║
+# ║  TRIGGER 2 — manual run (default: ON)                                  ║
+# ║  Run on demand from GitHub UI: Actions → GitDNS Patch → Run workflow   ║
+# ║  To disable: comment out the workflow_dispatch: line below (line 32)  ║
+# ║                                                                          ║
+# ║  TRIGGER 3 — scheduled run (default: OFF)                              ║
+# ║  Uncomment the schedule: block below to enable automatic scheduling.   ║
+# ║  Default schedule if enabled: every Monday at 2am UTC.                 ║
+# ║  Customise: https://crontab.guru to generate your own cron expression  ║
+# ╠══════════════════════════════════════════════════════════════════════════╣
+# ║  BOOTSTRAP                                                               ║
+# ║  First run on a repo with no existing GitDNS files automatically       ║
+# ║  falls back to full generation. Subsequent pushes are incremental.     ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
 
-# ── When this runs ────────────────────────────────────────────
-# 1. On every push to main         — catches file additions and deletions
-# 2. Manual trigger (workflow_dispatch) — run on demand from GitHub UI
-# 3. Weekly schedule               — keeps zone file fresh even if repo is quiet
-#
-# Note: The zone file only needs updating when files are ADDED or DELETED.
-# File modifications don't change raw URLs so the zone stays valid.
-# Running on every push is safe — if nothing structural changed,
-# git commit will find no diff and skip the push cleanly.
+name: GitDNS — Incremental Patch
 
 on:
+  # TRIGGER 1 — patch on every push to main
+  # Comment out the next 2 lines to disable auto-patch on push
   push:
     branches: [main]
+
+  # TRIGGER 2 — manual run from GitHub UI
+  # Comment out the next line to disable manual trigger
   workflow_dispatch:
-  schedule:
-    - cron: '0 2 * * 1'  # Every Monday at 2am UTC
+
+  # TRIGGER 3 — scheduled run (currently OFF)
+  # Uncomment the next 2 lines to enable. Edit cron to customise schedule.
+  # schedule:
+  #   - cron: '0 2 * * 1'  # Every Monday at 2am UTC — edit as needed
 
 jobs:
-  generate-zone-file:
-    runs-on: ubuntu-latest  # GitHub's free runner — 4 vCPU, 16GB RAM
+  gitdns-patch:
+    runs-on: ubuntu-latest  # GitHub free runner — 4 vCPU, 16GB RAM, zero cost for public repos
 
-    # Required permissions for the GITHUB_TOKEN to commit back to the repo
     permissions:
-      contents: write
+      contents: write  # Required to commit patched files back to the repo
 
     steps:
-      # ── Step 1: Checkout the repo that triggered this workflow ──
+      # ── Step 1: Checkout ───────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          fetch-depth: 2          # Need previous commit to diff against
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      # ── Step 2: Set up Node.js (no install needed — zero dependencies) ──
+      # ── Step 2: Node.js setup ──────────────────────────────────
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      # ── Step 3: Pull the latest GitDNS script ──────────────────
+      # ── Step 3: Clone GitDNS script ────────────────────────────
       - name: Clone GitDNS
         run: git clone https://github.com/JOLT-dailyAi/GitDNS /tmp/gitdns
 
-      # ── Step 4: Generate zone file and manifest ────────────────
-      # working-directory ensures all three output files land inside
-      # the checked-out repo so git can see and commit them.
-      - name: Generate GitDNS zone file
+      # ── Step 4: Detect structural changes ─────────────────────
+      # Structural change = file ADDED or DELETED (not modified).
+      # Modifications don't change raw URLs so .zone stays valid.
+      - name: Detect structural changes
+        id: changes
+        run: |
+          ADDED=$(git diff --name-only --diff-filter=A HEAD~1 HEAD 2>/dev/null || echo "")
+          DELETED=$(git diff --name-only --diff-filter=D HEAD~1 HEAD 2>/dev/null || echo "")
+
+          echo "Added files  : ${ADDED:-none}"
+          echo "Deleted files: ${DELETED:-none}"
+
+          if [ -z "$ADDED" ] && [ -z "$DELETED" ]; then
+            echo "structural=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  No structural changes — skipping patch."
+          else
+            echo "structural=true"  >> $GITHUB_OUTPUT
+            echo "added=$ADDED"     >> $GITHUB_OUTPUT
+            echo "deleted=$DELETED" >> $GITHUB_OUTPUT
+            echo "✅ Structural changes detected — patch required."
+          fi
+
+      # ── Step 5: Bootstrap check ────────────────────────────────
+      # If .zone doesn't exist yet (first run), fall back to full generation.
+      # After bootstrap, all subsequent pushes use incremental patch.
+      - name: Check bootstrap needed
+        id: bootstrap
+        if: steps.changes.outputs.structural == 'true'
+        run: |
+          REPO_SLUG=$(echo "${{ github.repository }}" | tr '/' '_')
+          ZONE_FILE="README/GitDNS/${REPO_SLUG}/${REPO_SLUG}.zone"
+
+          if [ ! -f "$ZONE_FILE" ]; then
+            echo "needed=true" >> $GITHUB_OUTPUT
+            echo "⚡ Bootstrap: no zone file found — will run full generation."
+          else
+            echo "needed=false" >> $GITHUB_OUTPUT
+            echo "✅ Zone file exists — incremental patch mode."
+          fi
+
+      # ── Step 6a: Full generation (bootstrap only) ──────────────
+      # Runs ONLY on first-ever execution when no zone file exists yet.
+      - name: Full generation (bootstrap)
+        if: steps.changes.outputs.structural == 'true' && steps.bootstrap.outputs.needed == 'true'
         working-directory: ${{ github.workspace }}
         run: |
           echo "Working dir: $(pwd)"
           node /tmp/gitdns/gitdns.js https://github.com/${{ github.repository }}
           echo "Files created:"
-          find . -name "*.zone" -o -name "*.txt" | grep GitDNS || echo "No GitDNS files found"
+          find . -name "*.zone" -o -name "*.map" -o -name "*.tree" | grep GitDNS || echo "No GitDNS files found"
           ls -la README/GitDNS/ 2>/dev/null || echo "README/GitDNS/ not found"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITDNS_OUTPUT_DIR: ${{ github.workspace }}
 
-      # ── Step 5: Commit output files back to the repo ──────────
-      # [skip ci] in the commit message prevents this commit from
-      # triggering another workflow run (infinite loop prevention).
-      - name: Commit zone file
+      # ── Step 6b: Incremental patch ─────────────────────────────
+      # Patches existing .map and .zone — no full tree re-crawl.
+      # Reads git diff, removes deleted paths, inserts added paths, re-sorts.
+      - name: Incremental patch
+        if: steps.changes.outputs.structural == 'true' && steps.bootstrap.outputs.needed == 'false'
+        working-directory: ${{ github.workspace }}
+        run: |
+          REPO_SLUG=$(echo "${{ github.repository }}" | tr '/' '_')
+          ZONE_FILE="README/GitDNS/${REPO_SLUG}/${REPO_SLUG}.zone"
+          MAP_FILE="README/GitDNS/${REPO_SLUG}/${REPO_SLUG}.map"
+
+          ADDED="${{ steps.changes.outputs.added }}"
+          DELETED="${{ steps.changes.outputs.deleted }}"
+
+          echo "Patching zone file: $ZONE_FILE"
+          echo "Patching map file : $MAP_FILE"
+
+          node -e "
+            const fs = require('fs');
+
+            const added   = \`${ADDED}\`.trim().split('\n').filter(Boolean);
+            const deleted = \`${DELETED}\`.trim().split('\n').filter(Boolean);
+
+            console.log('Patch: +' + added.length + ' / -' + deleted.length);
+
+            // ── Patch .zone ──────────────────────────────────────
+            const zone     = fs.readFileSync('${ZONE_FILE}', 'utf8');
+            const zHeader  = zone.split('\n').filter(l => l.startsWith(';') || l.startsWith('\$') || l === '');
+            let   zPaths   = zone.split('\n').filter(l => l && !l.startsWith(';') && !l.startsWith('\$'));
+
+            zPaths = zPaths.filter(p => !deleted.includes(p));
+            added.forEach(p => { if (!zPaths.includes(p)) zPaths.push(p); });
+            zPaths.sort();
+
+            fs.writeFileSync('${ZONE_FILE}', [...zHeader, ...zPaths].join('\n'), 'utf8');
+            console.log('Zone patched — entries: ' + zPaths.length);
+
+            // ── Patch .map ───────────────────────────────────────
+            // For .map we rebuild the indented tree from the patched path list
+            // since indentation depends on the full hierarchy, not just changed lines
+            const allPaths = zPaths;
+            const map      = fs.readFileSync('${MAP_FILE}', 'utf8');
+            const mHeader  = map.split('\n').filter(l => l.startsWith(';') || l === '').slice(0, 6);
+
+            // Build indented tree from flat path list
+            const tree = {};
+            for (const p of allPaths) {
+              const parts = p.split('/');
+              let node = tree;
+              for (let i = 0; i < parts.length - 1; i++) {
+                if (!node[parts[i]]) node[parts[i]] = {};
+                node = node[parts[i]];
+              }
+              node[parts[parts.length - 1]] = null;
+            }
+
+            function renderTree(node, indent) {
+              const lines = [];
+              const pad   = '  '.repeat(indent);
+              const keys  = Object.keys(node).sort();
+              for (const k of keys) {
+                if (node[k] === null) {
+                  lines.push(pad + k);
+                } else {
+                  lines.push(pad + k + '/');
+                  lines.push(...renderTree(node[k], indent + 1));
+                }
+              }
+              return lines;
+            }
+
+            const mapContent = [...mHeader, '', ...renderTree(tree, 0)].join('\n');
+            fs.writeFileSync('${MAP_FILE}', mapContent, 'utf8');
+            console.log('Map patched — paths: ' + allPaths.length);
+          "
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── Step 7: Commit patched files ───────────────────────────
+      # [skip ci] prevents this commit triggering another workflow run.
+      - name: Commit patched files
+        if: steps.changes.outputs.structural == 'true'
         run: |
           git config user.name  "gitdns-bot"
           git config user.email "gitdns@users.noreply.github.com"
           mkdir -p README/GitDNS
           git add --all README/GitDNS/
           git diff --staged --quiet \
-            && echo "ℹ️  No structural changes detected — zone file unchanged." \
-            || (git commit -m "chore(ai): update gitdns zone file [skip ci]" && git push)
+            && echo "ℹ️  No changes to commit." \
+            || (git commit -m "chore(ai): patch gitdns index [skip ci]" && git push)
