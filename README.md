@@ -241,6 +241,48 @@ Copy both to `.github/workflows/` in your repo.
 
 ---
 
+### Testing on a feature branch before merging to main
+
+GitHub Actions only registers workflows that exist on the **default branch** (usually `main`).
+A workflow file on a feature branch only will not appear in the Actions tab and cannot be triggered.
+
+**Three ways to test on a feature branch:**
+
+**Option A — Change default branch temporarily** *(easiest for solo projects)*
+```
+GitHub repo → Settings → Branches → switch default to your feature branch
+→ workflows register immediately → test → switch default back to main
+```
+Takes 2 minutes. Safe when working solo with no open PRs targeting main.
+
+**Option B — Cherry-pick just the workflow files to main**
+```bash
+git checkout main
+git checkout feature/your-branch -- .github/workflows/gitdns.yml
+git checkout feature/your-branch -- .github/workflows/gitdns-full.yml
+git commit -m "chore: add GitDNS workflows"
+git push
+```
+Your feature work stays on the branch. Only the two YML files land on main.
+GitHub registers them — `workflow_dispatch` now works on any branch.
+
+**Option C — Run the script locally** *(fastest for verifying output only)*
+```bash
+export GITHUB_TOKEN=ghp_yourtoken
+node gitdns.js https://github.com/your-org/your-repo
+```
+Zero GitHub Actions involvement. All three files generated locally in seconds.
+
+**Recommended installation order for new repos:**
+```
+1. Add both YML files to main first (via any option above)
+2. Create feature branch from main — inherits workflows automatically
+3. Test on feature branch via Actions tab → Run workflow → select branch
+4. Merge when satisfied
+```
+
+---
+
 ### `gitdns.yml` — Incremental Patch (runs on every push)
 
 Patches `.map` and `.zone` only when files are added or deleted.
