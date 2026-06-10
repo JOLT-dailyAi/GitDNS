@@ -362,7 +362,10 @@ function buildOutput(files, dirs, branchName) {
 
   const treeSection = buildTree(files, dirs, branchName);
 
+  const repoBase = `${owner}_${repoName}`;
   return [
+    `; AGENT NOTICE: Human-readable topology diagram for ${owner}/${repoName}. High token overhead — do not load into context.`,
+    `; For navigation: query ${repoBase}.map to identify your target nodes, then forward to ${repoBase}.zone for dispatch.`,
     '',
     line,
     `📊 REPOSITORY: ${repoName.toUpperCase()} (👤 ${owner})`,
@@ -399,6 +402,54 @@ function buildOutput(files, dirs, branchName) {
 
 
 
+// ── Map file generator ───────────────────────────────────────
+// Produces a lightweight topology index for AI agent orientation.
+// Indented directory structure — no URLs, no decoration.
+// Agent reads this first to identify target file paths,
+// then forwards those paths to the .zone routing table for dispatch.
+function generateMapFile(files, dirs, branchName) {
+  const repoBase  = `${owner}_${repoName}`;
+  const firstLine = [
+    `; AGENT NOTICE: Network topology index for ${owner}/${repoName}.`,
+    `; Identify your target nodes (file paths) from this map.`,
+    `; Forward those paths as packets to ${repoBase}.zone`,
+    `; — the routing table will dispatch you to the correct address.`,
+  ].join('\n');
+
+  // Build indented tree from flat file+dir list
+  const lines = [firstLine, '', `; Repo   : ${owner}/${repoName} | Branch: ${branchName}`, ''];
+
+  // Index children by parent path
+  const childDirs  = {};
+  const childFiles = {};
+  for (const d of dirs) {
+    const p = d.parentPath === '/' ? '' : d.parentPath;
+    if (!childDirs[p])  childDirs[p]  = [];
+    childDirs[p].push(d);
+  }
+  for (const f of files) {
+    const p = f.parentPath === '/' ? '' : f.parentPath;
+    if (!childFiles[p]) childFiles[p] = [];
+    childFiles[p].push(f);
+  }
+
+  function renderNode(dirPath, indent) {
+    const myFiles = (childFiles[dirPath] || []).sort((a,b) => a.name.localeCompare(b.name));
+    const myDirs  = (childDirs[dirPath]  || []).sort((a,b) => a.name.localeCompare(b.name));
+    const pad     = '  '.repeat(indent);
+
+    for (const f of myFiles) lines.push(`${pad}${f.name}`);
+    for (const d of myDirs)  {
+      lines.push(`${pad}${d.name}/`);
+      renderNode(d.path, indent + 1);
+    }
+  }
+
+  renderNode('', 0);
+  return lines.join('\n');
+}
+
+
 // ── Zone file generator ───────────────────────────────────────
 // Produces a token-optimized gitdns.zone file.
 // Format mirrors a DNS zone file:
@@ -414,14 +465,16 @@ function buildOutput(files, dirs, branchName) {
 function generateZoneFile(files, branchName) {
   const origin = `https://raw.githubusercontent.com/${owner}/${repoName}/${branchName}/`;
 
+  const repoBase  = `${owner}_${repoName}`;
   const lines = [
-    '; GitDNS Authoritative Zone File',
-    `; Repo   : ${owner}/${repoName} | Branch: ${branchName}`,
-    `; Files  : ${files.length}`,
-    `; Generated: ${formatTimestamp()}`,
-    '; Optimized for minimal AI agent token consumption.',
-    '; Usage  : Full URL = $ORIGIN + relative path',
-    '; Example: ' + origin + 'src/index.js',
+    '; AGENT NOTICE: Pre-resolved routing table. Do NOT ingest entirety — high token overhead.',
+    `; Accepts inbound paths from ${repoBase}.map only.`,
+    '; Lookup your path, append to $ORIGIN (next-hop address), and dispatch fetch request directly.',
+    `; No paths from ${repoBase}.map? Drop request — route via ${repoBase}.map first, then forward here.`,
+    '; ─────────────────────────────────────────────────────────────',
+    `; Repo      : ${owner}/${repoName} | Branch: ${branchName}`,
+    `; Entries   : ${files.length}`,
+    `; Generated : ${formatTimestamp()}`,
     '',
     `$ORIGIN ${origin}`,
     '',
@@ -503,18 +556,28 @@ async function main() {
     const outputDir = path.join(process.env.GITDNS_OUTPUT_DIR || process.cwd(), 'README', 'GitDNS', `${owner}_${repoName}`);
     fs.mkdirSync(outputDir, { recursive: true }); // creates folders if they don't exist
 
-    const manifestContent  = buildOutput(files, dirs, branchName);
-    const manifestFilename = `${owner}_${repoName}.tree`;
-    fs.writeFileSync(path.join(outputDir, manifestFilename), manifestContent, 'utf8');
+    // Three outputs — each with a distinct job:
+    // .tree  → humans       (decoration, stats, both URLs)
+    // .map   → agent orient (indented topology, no URLs)
+    // .zone  → agent fetch  (pre-resolved routing table, flat paths)
 
-    const zoneContent      = generateZoneFile(files, branchName);
-    const zoneFilename     = customZoneName ? `${customZoneName}.zone` : `${owner}_${repoName}.zone`;
+    const treeContent    = buildOutput(files, dirs, branchName);
+    const treeFilename   = `${owner}_${repoName}.tree`;
+    fs.writeFileSync(path.join(outputDir, treeFilename), treeContent, 'utf8');
+
+    const mapContent     = generateMapFile(files, dirs, branchName);
+    const mapFilename    = `${owner}_${repoName}.map`;
+    fs.writeFileSync(path.join(outputDir, mapFilename), mapContent, 'utf8');
+
+    const zoneContent    = generateZoneFile(files, branchName);
+    const zoneFilename   = customZoneName ? `${customZoneName}.zone` : `${owner}_${repoName}.zone`;
     fs.writeFileSync(path.join(outputDir, zoneFilename), zoneContent, 'utf8');
 
     console.log(`\n✅ Done!`);
     console.log(`   📁 Output folder : README/GitDNS/${owner}_${repoName}/`);
-    console.log(`   📄 ${manifestFilename.padEnd(30)} — human tree      (rich, emojis, stats, both URLs)`);
-    console.log(`   📡 ${zoneFilename.padEnd(30)} — gitdns zone file (lean, $ORIGIN + flat paths)`);
+    console.log(`   🌳 ${treeFilename.padEnd(32)} — humans       (decoration, stats, both URLs)`);
+    console.log(`   🗺️  ${mapFilename.padEnd(32)} — agent orient (topology, no URLs)`);
+    console.log(`   📡 ${zoneFilename.padEnd(32)} — agent fetch  (pre-resolved routing table)`);
     console.log(`   Files : ${files.length.toLocaleString()}  |  Dirs: ${dirs.length.toLocaleString()}\n`);
 
   } catch (err) {
