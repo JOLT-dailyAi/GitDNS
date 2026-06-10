@@ -10,9 +10,12 @@
 # ╠══════════════════════════════════════════════════════════════════════════╣
 # ║  USER CONTROLS — comment out any trigger block to disable it           ║
 # ║                                                                          ║
-# ║  TRIGGER 1 — push to main (default: ON)                                ║
+# ║  TRIGGER 1 — push to main or feature branches (default: ON)            ║
 # ║  Patches .map and .zone whenever files are added or deleted.           ║
-# ║  To disable: comment out the push: block below (lines 30-31)          ║
+# ║  Add/remove branch patterns in the push: block below.                 ║
+# ║  NOTE: YML files must exist on default branch (main) first.           ║
+# ║  See README: Testing on a feature branch before merging to main.      ║
+# ║  To disable entirely: comment out the push: block below               ║
 # ║                                                                          ║
 # ║  TRIGGER 2 — manual run (default: ON)                                  ║
 # ║  Run on demand from GitHub UI: Actions → GitDNS Patch → Run workflow   ║
@@ -31,10 +34,18 @@
 name: GitDNS — Incremental Patch
 
 on:
-  # TRIGGER 1 — patch on every push to main
-  # Comment out the next 2 lines to disable auto-patch on push
+  # TRIGGER 1 — push to main or feature branches
+  # Comment out the next 3 lines to disable auto-patch on push
+  # Add or remove branch patterns to match your workflow
+  # NOTE: workflow files must exist on your default branch (main) first
+  # See README: Testing on a feature branch before merging to main
   push:
-    branches: [main]
+    branches:
+      - main
+      - 'feature/**'   # matches feature/anything
+      - 'feat/**'      # common short form
+      - 'dev'          # uncomment or add your branch names as needed
+      # - 'staging'    # example — uncomment if you use a staging branch
 
   # TRIGGER 2 — manual run from GitHub UI
   # Comment out the next line to disable manual trigger
