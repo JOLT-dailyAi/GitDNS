@@ -21,10 +21,11 @@
 # ╠══════════════════════════════════════════════════════════════════════════╣
 # ║  USER CONTROLS — comment out any trigger block to disable it           ║
 # ║                                                                          ║
-# ║  TRIGGER 1 — merge to main (default: ON)                               ║
-# ║  Regenerates all files when a PR is merged or push lands on main.      ║
-# ║  Recommended for repos under 5,000 files.                              ║
-# ║  For large repos: comment out lines 50-52 to disable auto-run.        ║
+# ║  TRIGGER 1 — push to main or feature branches (default: ON)            ║
+# ║  Regenerates all files on push. Add/remove branch patterns below.     ║
+# ║  NOTE: YML files must exist on default branch (main) first.           ║
+# ║  See README: Testing on a feature branch before merging to main.      ║
+# ║  For large repos: comment out the push: block, enable schedule.       ║
 # ║                                                                          ║
 # ║  TRIGGER 2 — manual run (default: ON)                                  ║
 # ║  Run on demand: Actions → GitDNS Full Regeneration → Run workflow      ║
@@ -45,10 +46,17 @@
 name: GitDNS — Full Regeneration
 
 on:
-  # TRIGGER 1 — full regeneration on merge/push to main
-  # For large repos (5,000+ files): comment out the next 2 lines
+  # TRIGGER 1 — push to main or feature branches
+  # For large repos (5,000+ files): comment out this block, enable schedule instead
+  # NOTE: workflow files must exist on your default branch (main) first
+  # See README: Testing on a feature branch before merging to main
   push:
-    branches: [main]
+    branches:
+      - main
+      - 'feature/**'   # matches feature/anything
+      - 'feat/**'      # common short form
+      - 'dev'          # uncomment or add your branch names as needed
+      # - 'staging'    # example — uncomment if you use a staging branch
 
   # TRIGGER 2 — manual run from GitHub UI (always recommended to keep ON)
   # Comment out the next line to disable manual trigger
