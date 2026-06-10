@@ -1,0 +1,19 @@
+; AGENT NOTICE: Network topology index for JOLT-dailyAi/GitDNS.
+; Identify your target nodes (file paths) from this map.
+; Forward those paths as packets to JOLT-dailyAi_GitDNS.zone
+; — the routing table will dispatch you to the correct address.
+
+; Repo   : JOLT-dailyAi/GitDNS | Branch: main
+
+gitdns.js
+LICENSE
+README.md
+.github/
+  workflows/
+    gitdns.yml
+README/
+  GitDNS/
+    AGENT_README.md
+    JOLT-dailyAi_GitDNS/
+      JOLT-dailyAi_GitDNS.tree
+      JOLT-dailyAi_GitDNS.zone

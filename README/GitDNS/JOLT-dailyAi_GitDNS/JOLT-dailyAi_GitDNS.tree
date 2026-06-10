@@ -1,3 +1,5 @@
+; AGENT NOTICE: Human-readable topology diagram for JOLT-dailyAi/GitDNS. High token overhead — do not load into context.
+; For navigation: query JOLT-dailyAi_GitDNS.map to identify your target nodes, then forward to JOLT-dailyAi_GitDNS.zone for dispatch.
 
 ════════════════════════════════════════════════════════════════════════════════
 📊 REPOSITORY: GITDNS (👤 JOLT-dailyAi)
@@ -6,12 +8,12 @@
 🔗 https://github.com/JOLT-dailyAi/GitDNS
 
 📊 STATS
-├── 📏 Size: 38.78 KB
+├── 📏 Size: 41.78 KB
 ├── 📁 Directories: 5
 ├── 📄 Files: 7
 └── 🏗️ Max Depth: 3
 
-⏰ Generated: 10 Jun 2026, 06:13 am UTC
+⏰ Generated: 10 Jun 2026, 07:56 am UTC
 ════════════════════════════════════════════════════════════════════════════════
 
 🌳 REPOSITORY STRUCTURE:
@@ -37,7 +39,7 @@ YAML 📄, JavaScript ⚡, Markdown 📖
 📊 FILE DETAILS (Cached | Stable URLs):
      4.35 KB - 📄 gitdns.yml 📄 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/main/.github/workflows/gitdns.yml
      1.04 KB - 📄 LICENSE 📜 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/main/LICENSE
-    21.46 KB - 📄 gitdns.js ⚡ - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/main/gitdns.js
+    24.47 KB - 📄 gitdns.js ⚡ - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/main/gitdns.js
      5.99 KB - 📄 README.md 📖 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/main/README.md
      0.79 KB - 📄 AGENT_README.md 📖 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/main/README/GitDNS/AGENT_README.md
      4.58 KB - 📄 JOLT-dailyAi_GitDNS.tree 📄 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/main/README/GitDNS/JOLT-dailyAi_GitDNS/JOLT-dailyAi_GitDNS.tree
