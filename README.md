@@ -218,56 +218,75 @@ Your token is read from the environment variable — never passed as a command-l
 
 ---
 
-## GitHub Actions — Auto-generate on every push
+## GitHub Actions — Two Workflow Files
 
-Add this to your repo at `.github/workflows/gitdns.yml` to regenerate all three files automatically whenever files are added or deleted.
+GitDNS uses two separate workflow files. Each does a different job.
+Copy both to `.github/workflows/` in your repo.
 
-```yaml
-name: GitDNS — Update zone file
+---
 
-on:
-  push:
-    branches: [main]
-  workflow_dispatch:
-  schedule:
-    - cron: '0 2 * * 1'  # Every Monday at 2am UTC
+### `gitdns.yml` — Incremental Patch (runs on every push)
 
-jobs:
-  generate:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+Patches `.map` and `.zone` only when files are added or deleted.
+Skips entirely if only file contents changed — raw URLs don't change on modification.
+Fast — completes in ~3-5 seconds regardless of repo size.
+Does **not** update `.tree` — use `gitdns-full.yml` for that.
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+**Performance:** Safe to run on every push for any repo size.
 
-      - name: Clone GitDNS
-        run: git clone https://github.com/JOLT-dailyAi/GitDNS /tmp/gitdns
+**User controls** (comment out to disable):
+- `push: branches: [main]` — auto-patch on every push to main
+- `workflow_dispatch:` — manual trigger from GitHub UI
+- `schedule:` — off by default, uncomment to enable scheduled runs
 
-      - name: Generate files
-        working-directory: ${{ github.workspace }}
-        run: node /tmp/gitdns/gitdns.js https://github.com/${{ github.repository }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITDNS_OUTPUT_DIR: ${{ github.workspace }}
+**Bootstrap:** First run on a repo with no existing GitDNS files automatically
+falls back to full generation. Every subsequent push is incremental.
 
-      - name: Commit files
-        run: |
-          git config user.name  "gitdns-bot"
-          git config user.email "gitdns@users.noreply.github.com"
-          mkdir -p README/GitDNS
-          git add --all README/GitDNS/
-          git diff --staged --quiet \
-            && echo "No structural changes." \
-            || (git commit -m "chore(ai): update gitdns files [skip ci]" && git push)
+---
+
+### `gitdns-full.yml` — Full Regeneration (runs on merge / manual / schedule)
+
+Fully regenerates all three files (`.tree`, `.map`, `.zone`) from scratch via the GitHub API.
+Stats, file counts, and tech stack are recalculated accurately.
+Run time depends on repo size.
+
+| Repo size | Approx run time | Recommended trigger |
+|---|---|---|
+| < 1,000 files | ~5 seconds | Auto on every merge |
+| 1,000–5,000 files | ~30 seconds | Auto on merge to main |
+| 5,000–20,000 files | ~1-3 minutes | Schedule only (weekly) |
+| 20,000+ files | 3-10 minutes | Manual trigger only |
+
+**User controls** (comment out to disable):
+- `push: branches: [main]` — auto-regenerate on merge. For large repos (5,000+ files): **comment this out** and enable the schedule trigger instead
+- `workflow_dispatch:` — manual trigger, always recommended ON
+- `schedule:` — off by default, uncomment and customise for large repos
+
+**Threshold rule:**
+```
+Repo < 5,000 files  → keep push trigger ON,  schedule OFF
+Repo > 5,000 files  → comment push trigger,  enable schedule
 ```
 
-Runs on GitHub's free runners (4 vCPU, 16GB RAM) — zero cost for public repos.
+---
+
+### Workflow split — why two files?
+
+```
+gitdns.yml       — runs constantly, lightweight, patches only changed paths
+gitdns-full.yml  — runs deliberately, authoritative, rebuilds everything fresh
+```
+
+This mirrors how production systems handle indexes:
+- Incremental diff on every change — cheap, fast
+- Full rebuild on demand / schedule — accurate, complete
+
+The `.tree` file is only updated by `gitdns-full.yml` — since its stats
+(total file count, repo size, tech stack) require a full scan to be accurate.
+
+---
+
+Both workflows run on GitHub's free runners (4 vCPU, 16GB RAM) — zero cost for public repos.
 
 ---
 
