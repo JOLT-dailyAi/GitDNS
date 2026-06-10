@@ -1,3 +1,8 @@
+<!-- AGENT NOTICE: You are reading the GitDNS project documentation.
+     This file explains the navigation protocol, token cost analysis, and three-file system.
+     After reading: navigate to README/GitDNS/ — find your target repo folder
+     and start with {repo_name}.map for topology, then query {repo_name}.zone for dispatch. -->
+
 # 📡 GitDNS
 
 > **DNS for GitHub repositories.**
@@ -9,44 +14,128 @@
 
 Large codebases are invisible to AI agents by default. To understand a repo, an agent today must either:
 
-- **Ingest everything upfront** — expensive, hits context window limits fast
-- **Crawl the GitHub API directory-by-directory** — slow, hits rate limits, requires recursive calls
+- **Ingest everything upfront** — expensive, blows context window limits on any repo over ~3,000 files
+- **Crawl the GitHub API directory-by-directory** — slow, hits rate limits, requires recursive calls before a single task begins
 
-## The Solution
+## The Solution — DNS for Repositories
 
-GitDNS works like a DNS zone file. It doesn't contain the code — it tells the agent exactly where to find it.
-
-One run. Two output files. Your agent navigates the entire codebase on demand.
+GitDNS mirrors how DNS works. A DNS server doesn't contain the website — it tells you the address. GitDNS doesn't contain the code — it tells the agent exactly where to fetch it.
 
 ```
-google.com      →  DNS lookup  →  142.250.x.x       →  connect
-src/Button.tsx  →  GitDNS      →  raw.githubusercontent.com/...  →  fetch
+Internet                           GitDNS
+─────────────────────────────────────────────────────
+DNS zone file           →          repo routing table
+Domain name             →          file path
+IP address              →          raw GitHub URL
+DNS lookup              →          file lookup
+Website content         →          source code
+TTL / cache             →          manifest freshness
+Next-hop address        →          $ORIGIN
+Dispatch packet         →          fetch file
 ```
+
+One run. Three output files. Agent navigates the entire codebase on demand.
 
 ---
 
-## Dual Output
+## Token Cost — With vs Without GitDNS
+
+This is the core reason GitDNS exists. Token consumption on a 10,000 file repo:
+
+| Approach | Tokens consumed | Context window impact | Error risk |
+|---|---|---|---|
+| Full ingest (Repomix / Gitingest) | ~2,000,000 | Exceeds all current models | High — stale on next commit |
+| Agent crawls GitHub API | ~50,000 setup + rate limit hits | High — recursive calls before task starts | Medium — incomplete traversal |
+| `.tree` file fed to agent | ~200,000 | Consumes entire context window | High — dual URLs confuse agent |
+| **GitDNS `.map` + targeted `.zone` lookup** | **~8,000** | **5% of context window** | **Zero** |
+
+The `.map` + `.zone` split is **25x more token efficient** than feeding a `.tree` file to an agent, and **250x more efficient** than full ingestion.
+
+How the saving works:
+- Agent reads `.map` (~3,000 tokens for a 10k file repo) — understands structure, identifies 2-3 relevant files
+- Agent searches `.zone` for only those specific paths (~50 tokens per lookup)
+- Agent fetches only those files — never loads the full codebase into context
+
+---
+
+## Three-File Output
 
 ```bash
 $ node gitdns.js https://github.com/facebook/react
 
 ✅ Done!
-   📄 facebook_react.tree          — human manifest  (rich, emojis, stats, both URLs)
-   📡 facebook_react.zone         — gitdns zone file (lean, $ORIGIN + flat paths)
+   📁 Output folder : README/GitDNS/facebook_react/
+   🌳 facebook_react.tree    — humans       (decoration, stats, both URLs)
+   🗺️  facebook_react.map     — agent orient (topology index, no URLs)
+   📡 facebook_react.zone    — agent fetch  (pre-resolved routing table)
    Files : 3,421  |  Dirs: 412
 ```
 
-### `owner_repo.tree` — Human Tree
+---
+
+### `{repo}.tree` — Human Topology Diagram
+
 For developers orienting in a new codebase. Full directory tree with icons, file sizes, tech stack detection, and both stable + latest raw URLs per file.
 
-### `gitdns.zone` — Machine Zone File
-For AI agents. Token-optimized. Uses DNS `$ORIGIN` to declare the base URL once — eliminating repetition across thousands of file entries.
+**Do not feed to AI agents.** Token overhead on large repos will consume the entire context window before the agent starts its task.
 
 ```
-; GitDNS Authoritative Zone File
+════════════════════════════════════════════════════════════════════════════════
+📊 REPOSITORY: REACT (👤 facebook)
+════════════════════════════════════════════════════════════════════════════════
+⚡ Node.js Project
+🔗 https://github.com/facebook/react
+
+📊 STATS
+├── 📏 Size: 18.40 MB
+├── 📁 Directories: 412
+├── 📄 Files: 3,421
+└── 🏗️ Max Depth: 8
+...
+```
+
+---
+
+### `{repo}.map` — Agent Network Topology Index
+
+Lightweight indented directory structure. No URLs, no decoration. Agent reads this first to understand repo architecture and identify which specific files are relevant to its task. Then forwards those paths to the `.zone` routing table.
+
+Token cost: ~3,000 for a 10,000 file repo.
+
+```
+; AGENT NOTICE: Network topology index. Identify your target nodes (file paths) from this map.
+; Forward those paths as packets to {repo}.zone — the routing table will dispatch you to the correct address.
+
 ; Repo   : facebook/react | Branch: main
-; Files  : 3421
-; Generated: 08 Jun 2026, 09:03 am IST
+
+packages/
+  react/
+    index.js
+    src/
+      React.js
+      ReactElement.js
+  react-dom/
+    index.js
+    src/
+      client/
+        ReactDOMClient.js
+src/
+  ...
+```
+
+---
+
+### `{repo}.zone` — Agent Routing Table
+
+Pre-resolved URL table. Flat paths only. Agent arrives here with specific paths identified from `.map`, looks them up, appends to `$ORIGIN` (next-hop address), and dispatches the fetch directly. No reconstruction needed.
+
+Token cost: ~50 tokens per targeted lookup vs ~40,000 to load the entire file.
+
+```
+; AGENT NOTICE: Pre-resolved routing table. Do NOT ingest entirety — high token overhead.
+; Accepts inbound paths from {repo}.map only.
+; Lookup your path, append to $ORIGIN (next-hop address), and dispatch fetch request directly.
+; No paths from {repo}.map? Drop request — route via {repo}.map first, then forward here.
 
 $ORIGIN https://raw.githubusercontent.com/facebook/react/main/
 
@@ -56,17 +145,31 @@ README.md
 packages/react/index.js
 packages/react/src/React.js
 packages/react-dom/index.js
-...3415 more lines
+...3,415 more entries
 ```
 
-Agent prompt to pair with this file:
+---
+
+## Agent Navigation Protocol
 
 ```
-You have been given a gitdns.zone file for this repository.
-Read the $ORIGIN value at the top to establish the base URL.
-When you need to inspect a file, combine $ORIGIN + relative path
-and use your fetch tool to retrieve it on demand.
-Do not attempt to read all files upfront.
+STEP 1 — Read .map  (~3,000 tokens)
+         Understand repo topology
+         Identify file paths relevant to your task
+         Example output: "I need packages/react/src/React.js and packages/react-dom/index.js"
+
+STEP 2 — Query .zone  (~50 tokens per path)
+         Look up only those specific paths in the routing table
+         Append each to $ORIGIN → fetch-ready URL
+         Do NOT load the entire .zone into context — search it, don't read it
+
+STEP 3 — Dispatch fetch
+         $ORIGIN + packages/react/src/React.js
+         = https://raw.githubusercontent.com/facebook/react/main/packages/react/src/React.js
+         Fetch. Read. Done.
+
+Total tokens for a 10,000 file repo: ~3,100
+vs full ingestion:                    ~2,000,000
 ```
 
 ---
@@ -86,10 +189,10 @@ node gitdns.js https://github.com/facebook/react
 # Specify a branch
 node gitdns.js https://github.com/facebook/react main
 
-# Custom zone filename (useful for multiple repos)
+# Custom output filename (useful for multiple repos simultaneously)
 node gitdns.js https://github.com/org/auth-service --output auth-service
 node gitdns.js https://github.com/org/payments     --output payments
-# produces: auth-service.zone and payments.zone
+# produces: auth-service.zone / payments.zone alongside auth-service.map / payments.map
 ```
 
 ---
@@ -111,13 +214,13 @@ set GITHUB_TOKEN=ghp_yourtoken           # Windows cmd
 node gitdns.js https://github.com/owner/repo
 ```
 
-Your token is read from the environment variable — it is never passed as a command-line argument and never logged.
+Your token is read from the environment variable — never passed as a command-line argument, never logged, never leaves your machine.
 
 ---
 
 ## GitHub Actions — Auto-generate on every push
 
-Add this to your repo at `.github/workflows/gitdns.yml` to regenerate the zone file automatically whenever files are added or deleted.
+Add this to your repo at `.github/workflows/gitdns.yml` to regenerate all three files automatically whenever files are added or deleted.
 
 ```yaml
 name: GitDNS — Update zone file
@@ -126,48 +229,45 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * 1'  # Every Monday at 2am UTC
 
 jobs:
   generate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
 
       - name: Clone GitDNS
         run: git clone https://github.com/JOLT-dailyAi/GitDNS /tmp/gitdns
 
-      - name: Generate zone file
+      - name: Generate files
+        working-directory: ${{ github.workspace }}
         run: node /tmp/gitdns/gitdns.js https://github.com/${{ github.repository }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITDNS_OUTPUT_DIR: ${{ github.workspace }}
 
-      - name: Commit zone file
+      - name: Commit files
         run: |
           git config user.name  "gitdns-bot"
           git config user.email "gitdns@users.noreply.github.com"
-          git add *_*.zone *_*.tree
-          git diff --staged --quiet || git commit -m "chore(ai): update gitdns zone file [skip ci]"
-          git push
+          mkdir -p README/GitDNS
+          git add --all README/GitDNS/
+          git diff --staged --quiet \
+            && echo "No structural changes." \
+            || (git commit -m "chore(ai): update gitdns files [skip ci]" && git push)
 ```
 
-This runs on GitHub's free runners (ubuntu-latest, 16GB RAM) — zero cost for public repos, uses your repo's built-in `GITHUB_TOKEN` automatically.
-
----
-
-## Free Tier Limits
-
-| Limit | Free tier | Why |
-|---|---|---|
-| Repo visibility | Public only | — |
-| Max files | 5,000 | — |
-| Max depth | 5 levels | — |
-
-Repos exceeding these limits exit with a clear failure message explaining what changed and how to fix it — so scheduled runs don't silently pass when a repo grows past a limit.
+Runs on GitHub's free runners (4 vCPU, 16GB RAM) — zero cost for public repos.
 
 ---
 
@@ -175,14 +275,27 @@ Repos exceeding these limits exit with a clear failure message explaining what c
 
 | | Repomix / Gitingest | GitDNS |
 |---|---|---|
-| Dumps full file contents | ✅ | ❌ intentional |
-| Token cost | Very high | Minimal |
-| Works on large monorepos | Hits context limits | ✅ |
-| Agent fetches only what it needs | ❌ | ✅ |
-| Portable flat file | ✅ | ✅ |
+| Output | Full file contents | Navigation index only |
+| Token cost (10k file repo) | ~2,000,000 | ~8,000 |
+| Works on large monorepos | Exceeds context limits | ✅ |
+| Agent fetches only what it needs | ❌ all or nothing | ✅ on demand |
+| Separate human vs agent output | ❌ | ✅ .tree / .map / .zone |
 | Zero dependencies | ❌ | ✅ |
+| Runs without a server | ❌ | ✅ |
 
-GitDNS is not a code dumper. It is a navigation index. The agent reads the map, then fetches only the files it actually needs.
+GitDNS is not a code dumper. It is a navigation infrastructure layer. The agent reads the topology map, identifies what it needs, then fetches only those files via the routing table.
+
+---
+
+## Free Tier Limits
+
+| Limit | Free tier |
+|---|---|
+| Repo visibility | Public only |
+| Max files | 5,000 |
+| Max depth | 5 levels |
+
+Repos exceeding these limits exit with a clear failure message and instructions — scheduled runs never silently pass when a repo grows past a limit.
 
 ---
 
@@ -191,8 +304,8 @@ GitDNS is not a code dumper. It is a navigation index. The agent reads the map, 
 - [ ] GitHub Action published to Marketplace
 - [ ] GitHub Sponsors — support the project
 - [ ] Private repo support (paid tier)
-- [ ] Hosted web version — paste a URL, get the files
-- [ ] Archive of popular public repo zone files
+- [ ] Hosted web version — paste a URL, get the three files instantly
+- [ ] Public archive of popular repo zone files
 
 ---
 
