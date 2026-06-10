@@ -8,12 +8,12 @@
 🔗 https://github.com/JOLT-dailyAi/GitDNS
 
 📊 STATS
-├── 📏 Size: 41.99 KB
+├── 📏 Size: 41.21 KB
 ├── 📁 Directories: 5
-├── 📄 Files: 8
+├── 📄 Files: 7
 └── 🏗️ Max Depth: 3
 
-⏰ Generated: 10 Jun 2026, 08:00 am UTC
+⏰ Generated: 10 Jun 2026, 08:04 am UTC
 ════════════════════════════════════════════════════════════════════════════════
 
 🌳 REPOSITORY STRUCTURE:
@@ -27,7 +27,6 @@
 │   │   └── 📄 gitdns.yml 📄
 ├── 📂 README/
 │   ├── 📂 GitDNS/
-│   │   ├── 📄 AGENT_README.md 📖
 │   │   ├── 📂 JOLT-dailyAi_GitDNS/
 │   │   │   ├── 📄 JOLT-dailyAi_GitDNS.map 📄
 │   │   │   ├── 📄 JOLT-dailyAi_GitDNS.tree 📄
@@ -42,7 +41,6 @@ YAML 📄, JavaScript ⚡, Markdown 📖
      1.04 KB - 📄 LICENSE 📜 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/main/LICENSE
     24.47 KB - 📄 gitdns.js ⚡ - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/main/gitdns.js
      5.99 KB - 📄 README.md 📖 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/main/README.md
-     0.79 KB - 📄 AGENT_README.md 📖 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/main/README/GitDNS/AGENT_README.md
      0.50 KB - 📄 JOLT-dailyAi_GitDNS.map 📄 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/main/README/GitDNS/JOLT-dailyAi_GitDNS/JOLT-dailyAi_GitDNS.map
      5.21 KB - 📄 JOLT-dailyAi_GitDNS.tree 📄 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/main/README/GitDNS/JOLT-dailyAi_GitDNS/JOLT-dailyAi_GitDNS.tree
      0.96 KB - 📄 JOLT-dailyAi_GitDNS.zone 📄 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/main/README/GitDNS/JOLT-dailyAi_GitDNS/JOLT-dailyAi_GitDNS.zone
@@ -52,7 +50,6 @@ YAML 📄, JavaScript ⚡, Markdown 📖
 📄 LICENSE 📜 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/refs/heads/main/LICENSE
 📄 gitdns.js ⚡ - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/refs/heads/main/gitdns.js
 📄 README.md 📖 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/refs/heads/main/README.md
-📄 AGENT_README.md 📖 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/refs/heads/main/README/GitDNS/AGENT_README.md
 📄 JOLT-dailyAi_GitDNS.map 📄 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/refs/heads/main/README/GitDNS/JOLT-dailyAi_GitDNS/JOLT-dailyAi_GitDNS.map
 📄 JOLT-dailyAi_GitDNS.tree 📄 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/refs/heads/main/README/GitDNS/JOLT-dailyAi_GitDNS/JOLT-dailyAi_GitDNS.tree
 📄 JOLT-dailyAi_GitDNS.zone 📄 - https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/refs/heads/main/README/GitDNS/JOLT-dailyAi_GitDNS/JOLT-dailyAi_GitDNS.zone

@@ -4,8 +4,8 @@
 ; No paths from JOLT-dailyAi_GitDNS.map? Drop request — route via JOLT-dailyAi_GitDNS.map first, then forward here.
 ; ─────────────────────────────────────────────────────────────
 ; Repo      : JOLT-dailyAi/GitDNS | Branch: main
-; Entries   : 8
-; Generated : 10 Jun 2026, 08:00 am UTC
+; Entries   : 7
+; Generated : 10 Jun 2026, 08:04 am UTC
 
 $ORIGIN https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/main/
 
@@ -13,7 +13,6 @@ $ORIGIN https://raw.githubusercontent.com/JOLT-dailyAi/GitDNS/main/
 LICENSE
 gitdns.js
 README.md
-README/GitDNS/AGENT_README.md
 README/GitDNS/JOLT-dailyAi_GitDNS/JOLT-dailyAi_GitDNS.map
 README/GitDNS/JOLT-dailyAi_GitDNS/JOLT-dailyAi_GitDNS.tree
 README/GitDNS/JOLT-dailyAi_GitDNS/JOLT-dailyAi_GitDNS.zone
