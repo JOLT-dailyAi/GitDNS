@@ -286,6 +286,46 @@ The `.tree` file is only updated by `gitdns-full.yml` — since its stats
 
 ---
 
+### Concurrency control — run queuing
+
+Both workflows share the same concurrency group:
+
+```yaml
+concurrency:
+  group: gitdns-${{ github.ref }}
+  cancel-in-progress: false
+```
+
+When two workflows trigger simultaneously on the same push (e.g. a push triggers
+both `gitdns.yml` and `gitdns-full.yml` at the same time), GitHub queues them
+rather than running both at once:
+
+```
+Push fires → both workflows trigger
+              ↓
+concurrency group: gitdns-refs/heads/main
+              ↓
+First run  → starts immediately
+Second run → enters queue, waits
+              ↓
+First run completes → commits → pushes
+              ↓
+Second run starts on updated ref → commits → pushes
+              ↓
+Both complete — no conflict, no dropped work
+```
+
+**Why queue instead of cancel?**
+Cancelling () would drop the second run entirely —
+useful for things like preview deploys where only the latest matters.
+For GitDNS both runs carry real work (one patches paths, one rebuilds stats)
+so queuing ensures neither is lost.
+
+A  before each push is also in place as a safety net —
+the queued run rebases on top of what the first run committed before pushing.
+
+---
+
 Both workflows run on GitHub's free runners (4 vCPU, 16GB RAM) — zero cost for public repos.
 
 ---
